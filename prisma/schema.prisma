@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("GARCOM") // ADMIN | GERENTE | GARCOM | KITCHEN
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+
+  @@map("user")
+}
+
+model Table {
+  id        String   @id @default(uuid())
+  number    Int      @unique
+  capacity  Int
+  status    String   @default("FREE") // FREE | OCCUPIED | RESERVED | CLOSED
+  clientName String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+
+  @@map("table")
+}
+
+model Product {
+  id                  String      @id @default(uuid())
+  name                String
+  description         String?
+  price               Int         // em centavos — R$ 12,50 = 1250
+  category            String      // CARNE | ACOMPANHAMENTO | CALDO | BEBIDA
+  isMeat              Boolean     @default(false) // indica se vendido por peso
+  available           Boolean     @default(true)
+  quantidadeTotal     Int         @default(0)
+  quantidadeDisponivel Int       @default(0)
+  quantidadeMinima    Int         @default(10)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  orderItems          OrderItem[]
+  estoqueMovimentacao EstoqueMovimentacao[]
+
+  @@map("product")
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  tableId     String
+  userId      String
+  status      String      @default("PENDING") // PENDING | PREPARING | READY | DELIVERED | CANCELLED | CLOSED
+  totalAmount Int         @default(0) // em centavos
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  table       Table       @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       OrderItem[]
+  estoqueMovimentacao EstoqueMovimentacao[]
+
+  @@index([tableId])
+  @@index([userId])
+  @@map("order")
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  productId String
+  quantity  Int
+  unitPrice Int     // snapshot do preço no momento do pedido
+  notes     String?
+  createdAt DateTime @default(now())
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_item")
+}
+
+model EstoqueMovimentacao {
+  id                  String   @id @default(uuid())
+  productId           String
+  quantidadeAnterior  Int
+  quantidadeAtual     Int
+  tipoMovimentacao    String   // VENDA | REPOSICAO | AJUSTE
+  pedidoId            String?
+  nota                String?
+  createdAt           DateTime @default(now())
+  product             Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order               Order?   @relation(fields: [pedidoId], references: [id], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([pedidoId])
+  @@map("estoque_movimentacao")
+}
