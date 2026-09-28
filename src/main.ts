@@ -8,7 +8,16 @@ async function bootstrap() {
   // Middleware
   app.use(cookieParser());
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: (origin, callback) => {
+      // Permite requisições sem origin (curl, apps mobile) e as origens conhecidas
+      if (!origin) return callback(null, true);
+      const allowed =
+        origin === 'http://localhost:3000' ||
+        origin === 'http://localhost:3001' ||
+        origin === 'https://comandaplus.duckdns.org' ||
+        /^https:\/\/.*\.vercel\.app$/.test(origin); // qualquer deploy/preview da Vercel
+      return callback(null, allowed);
+    },
     credentials: true,
   });
 
