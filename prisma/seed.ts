@@ -61,7 +61,7 @@ async function main() {
   const products = [
     // Carnes (vendidas por grama, mínimo 300g)
     { name: 'Bananinha', category: 'CARNE', isMeat: true, pricePerGram: 5, minGrams: 300 },
-    { name: 'Maca de Peito', category: 'CARNE', isMeat: true, pricePerGram: 4, minGrams: 300 },
+    { name: 'Maçã de Peito', category: 'CARNE', isMeat: true, pricePerGram: 4, minGrams: 300 },
     { name: 'Picanha', category: 'CARNE', isMeat: true, pricePerGram: 6, minGrams: 300 },
     { name: 'Fraldinha', category: 'CARNE', isMeat: true, pricePerGram: 5, minGrams: 300 },
     { name: 'Cupim', category: 'CARNE', isMeat: true, pricePerGram: 4, minGrams: 300 },
@@ -73,13 +73,15 @@ async function main() {
     { name: 'Caldo de Feijão', category: 'CALDO', price: 600 },
     { name: 'Caldo de Frango', category: 'CALDO', price: 700 },
 
-    // Bebidas (preço fixo)
-    { name: 'Água', category: 'BEBIDA', price: 300 },
-    { name: 'Refrigerante (lata)', category: 'BEBIDA', price: 500 },
-    { name: 'Refrigerante (garrafa)', category: 'BEBIDA', price: 1200 },
-    { name: 'Cerveja (garrafa)', category: 'BEBIDA', price: 1500 },
-    { name: 'Suco Natural', category: 'BEBIDA', price: 900 },
-    { name: 'Chope', category: 'BEBIDA', price: 2000 },
+    // Bebidas (marcas reais)
+    { name: 'Água Mineral 500ml', category: 'BEBIDA', price: 300 },
+    { name: 'Água com Gás 500ml', category: 'BEBIDA', price: 400 },
+    { name: 'Coca-Cola Lata 350ml', category: 'BEBIDA', price: 600 },
+    { name: 'Guaraná Antarctica Lata 350ml', category: 'BEBIDA', price: 600 },
+    { name: 'Coca-Cola 600ml', category: 'BEBIDA', price: 900 },
+    { name: 'Brahma 600ml', category: 'BEBIDA', price: 1200 },
+    { name: 'Heineken 600ml', category: 'BEBIDA', price: 1500 },
+    { name: 'Suco Natural 500ml', category: 'BEBIDA', price: 900 },
   ];
 
   for (const product of products) {

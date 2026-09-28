@@ -5,6 +5,7 @@ import { PrismaUserRepository } from 'src/infra/repositories/prisma/user/prisma-
 import { CreateUserUsecase } from 'src/usecases/user/create/create-user.usecase';
 import { ListUsersUsecase } from 'src/usecases/user/list/list-users.usecase';
 import { DeleteUserUsecase } from 'src/usecases/user/delete/delete-user.usecase';
+import { ResetPasswordUsecase } from 'src/usecases/user/reset-password/reset-password.usecase';
 import { HashingService } from 'src/infra/services/hashing/hashing.service';
 import { AuthModule } from '../auth/auth.module';
 
@@ -29,6 +30,12 @@ import { AuthModule } from '../auth/auth.module';
       provide: DeleteUserUsecase,
       useFactory: (repo: PrismaUserRepository) => new DeleteUserUsecase(repo),
       inject: [PrismaUserRepository],
+    },
+    {
+      provide: ResetPasswordUsecase,
+      useFactory: (repo: PrismaUserRepository, hashing: HashingService) =>
+        new ResetPasswordUsecase(repo, hashing),
+      inject: [PrismaUserRepository, HashingService],
     },
   ],
 })

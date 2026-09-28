@@ -27,10 +27,10 @@ export class LoginUsecase {
       throw new UnauthorizedException('Usuário ou senha incorretos');
     }
 
-    // 3. Gerar tokens
+    // 3. Gerar tokens (8h cobre um turno de trabalho sem deslogar)
     const accessToken = this.jwtService.sign(
       { userId: user.getId(), name: user.getName(), role: user.getRole() },
-      '15m',
+      '8h',
     );
     const refreshToken = this.jwtService.signRefresh(
       { userId: user.getId() },

@@ -79,6 +79,11 @@ export class User {
     this.updatedAt = new Date();
   }
 
+  requirePasswordChange(): void {
+    this.needsPasswordChange = true;
+    this.updatedAt = new Date();
+  }
+
   updateRole(role: UserRole): void {
     this.role = role;
     this.updatedAt = new Date();

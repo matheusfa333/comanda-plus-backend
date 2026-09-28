@@ -3,6 +3,7 @@ import { AuthGuard } from 'src/infra/web/auth/auth.guard';
 import { CreateUserUsecase } from 'src/usecases/user/create/create-user.usecase';
 import { ListUsersUsecase } from 'src/usecases/user/list/list-users.usecase';
 import { DeleteUserUsecase } from 'src/usecases/user/delete/delete-user.usecase';
+import { ResetPasswordUsecase } from 'src/usecases/user/reset-password/reset-password.usecase';
 
 @Controller('users')
 @UseGuards(AuthGuard)
@@ -11,6 +12,7 @@ export class UserController {
     private readonly createUserUsecase: CreateUserUsecase,
     private readonly listUsersUsecase: ListUsersUsecase,
     private readonly deleteUserUsecase: DeleteUserUsecase,
+    private readonly resetPasswordUsecase: ResetPasswordUsecase,
   ) {}
 
   private ensureAdmin(req: any) {
@@ -45,6 +47,13 @@ export class UserController {
   async remove(@Req() req: any, @Param('id') id: string) {
     this.ensureAdmin(req);
     return this.deleteUserUsecase.execute(id, req.userId);
+  }
+
+  @Post(':id/reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Req() req: any, @Param('id') id: string) {
+    this.ensureAdmin(req);
+    return this.resetPasswordUsecase.execute(id);
   }
 
   @Get('me')
