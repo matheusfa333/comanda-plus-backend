@@ -1,28 +1,50 @@
-import { Controller, Post, Get, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Body, Param, UseGuards, Req, ForbiddenException, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from 'src/infra/web/auth/auth.guard';
 import { CreateUserUsecase } from 'src/usecases/user/create/create-user.usecase';
+import { ListUsersUsecase } from 'src/usecases/user/list/list-users.usecase';
+import { DeleteUserUsecase } from 'src/usecases/user/delete/delete-user.usecase';
 
 @Controller('users')
 @UseGuards(AuthGuard)
 export class UserController {
-  constructor(private readonly createUserUsecase: CreateUserUsecase) {}
+  constructor(
+    private readonly createUserUsecase: CreateUserUsecase,
+    private readonly listUsersUsecase: ListUsersUsecase,
+    private readonly deleteUserUsecase: DeleteUserUsecase,
+  ) {}
+
+  private ensureAdmin(req: any) {
+    if (req.role !== 'ADMIN') {
+      throw new ForbiddenException('Apenas administradores podem gerenciar usuários');
+    }
+  }
+
+  @Get()
+  async list(@Req() req: any) {
+    this.ensureAdmin(req);
+    return this.listUsersUsecase.execute();
+  }
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   async create(
     @Req() req: any,
-    @Body() body: { name: string; email: string; password: string; role: string },
+    @Body() body: { name: string; email?: string; password?: string; role: string },
   ) {
-    // Validar que o usuário é admin
-    if (req.role !== 'ADMIN') {
-      throw new Error('Apenas admins podem criar usuários');
-    }
-
+    this.ensureAdmin(req);
     return this.createUserUsecase.execute({
       name: body.name,
       email: body.email,
       password: body.password,
       role: body.role as any,
     });
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  async remove(@Req() req: any, @Param('id') id: string) {
+    this.ensureAdmin(req);
+    return this.deleteUserUsecase.execute(id, req.userId);
   }
 
   @Get('me')

@@ -12,36 +12,38 @@ export class CreateUserUsecase {
 
   async execute(dto: {
     name: string;
-    email: string;
-    password: string;
-    role: 'ADMIN' | 'GERENTE' | 'GARCOM' | 'KITCHEN';
+    email?: string;
+    password?: string;
+    role: 'ADMIN' | 'GERENTE' | 'GARCOM' | 'COZINHA';
   }): Promise<{ id: string; message: string }> {
-    // 1. Verificar se email já existe
-    const existing = await this.userRepository.findByEmail(dto.email);
-    if (existing) {
-      throw new BadRequestException('Email já registrado');
-    }
-
-    // 2. Validar dados
+    // 1. Validar nome
     if (!dto.name || dto.name.trim().length === 0) {
       throw new BadRequestException('Nome é obrigatório');
     }
-    if (!dto.email || !this.isValidEmail(dto.email)) {
-      throw new BadRequestException('Email inválido');
-    }
-    if (!dto.password || dto.password.length < 6) {
-      throw new BadRequestException('Senha deve ter pelo menos 6 caracteres');
+
+    // Validar role permitida
+    const validRoles = ['ADMIN', 'GERENTE', 'GARCOM', 'COZINHA'];
+    if (!validRoles.includes(dto.role)) {
+      throw new BadRequestException('Função (role) inválida');
     }
 
-    // 3. Hash password
-    const hashedPassword = await this.hashingService.hash(dto.password);
+    // 2. Verificar se nome já existe (login é por nome)
+    const existing = await this.userRepository.findByName(dto.name.trim());
+    if (existing) {
+      throw new BadRequestException('Já existe um usuário com esse nome');
+    }
 
-    // 4. Criar entity
+    // 3. Senha padrão "123" — novo usuário troca no primeiro login
+    const initialPassword = dto.password && dto.password.length > 0 ? dto.password : '123';
+    const hashedPassword = await this.hashingService.hash(initialPassword);
+
+    // 4. Criar entity (needsPasswordChange = true por padrão)
     const user = User.create({
-      name: dto.name,
-      email: dto.email,
+      name: dto.name.trim(),
+      email: dto.email ?? null,
       password: hashedPassword,
       role: dto.role,
+      needsPasswordChange: true,
     });
 
     // 5. Salvar
@@ -51,10 +53,5 @@ export class CreateUserUsecase {
       id: user.getId(),
       message: `Usuário ${user.getName()} criado com sucesso`,
     };
-  }
-
-  private isValidEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
   }
 }

@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "./generated/prisma"
 }
 
 datasource db {
@@ -9,14 +8,15 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      String   @default("GARCOM") // ADMIN | GERENTE | GARCOM | KITCHEN
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  orders    Order[]
+  id                 String   @id @default(uuid())
+  name               String   @unique
+  email              String?  @unique
+  password           String
+  role               String   @default("GARCOM") // ADMIN | GERENTE | GARCOM | KITCHEN
+  needsPasswordChange Boolean @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  orders             Order[]
 
   @@map("user")
 }
@@ -38,7 +38,9 @@ model Product {
   id                  String      @id @default(uuid())
   name                String
   description         String?
-  price               Int         // em centavos — R$ 12,50 = 1250
+  price               Int         @default(0) // preço fixo em centavos (acompanhamentos/bebidas)
+  pricePerGram        Int?        // centavos por grama (carnes vendidas por peso)
+  minGrams            Int?        // pedido mínimo em gramas (carnes)
   category            String      // CARNE | ACOMPANHAMENTO | CALDO | BEBIDA
   isMeat              Boolean     @default(false) // indica se vendido por peso
   available           Boolean     @default(true)

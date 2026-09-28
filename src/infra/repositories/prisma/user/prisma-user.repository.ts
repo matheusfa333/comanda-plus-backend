@@ -14,6 +14,7 @@ export class PrismaUserRepository implements UserRepository {
       email: raw.email,
       password: raw.password,
       role: raw.role as any,
+      needsPasswordChange: raw.needsPasswordChange,
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
     });
@@ -27,6 +28,7 @@ export class PrismaUserRepository implements UserRepository {
         email: user.getEmail(),
         password: user.getPassword(),
         role: user.getRole(),
+        needsPasswordChange: user.getNeedsPasswordChange(),
         createdAt: user.getCreatedAt(),
         updatedAt: user.getUpdatedAt(),
       },
@@ -35,6 +37,11 @@ export class PrismaUserRepository implements UserRepository {
 
   async findById(id: string): Promise<User | null> {
     const raw = await this.prisma.user.findUnique({ where: { id } });
+    return raw ? this.toEntity(raw) : null;
+  }
+
+  async findByName(name: string): Promise<User | null> {
+    const raw = await this.prisma.user.findUnique({ where: { name } });
     return raw ? this.toEntity(raw) : null;
   }
 
@@ -55,6 +62,7 @@ export class PrismaUserRepository implements UserRepository {
         name: user.getName(),
         role: user.getRole(),
         password: user.getPassword(),
+        needsPasswordChange: user.getNeedsPasswordChange(),
         updatedAt: user.getUpdatedAt(),
       },
     });

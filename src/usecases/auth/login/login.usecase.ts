@@ -12,11 +12,11 @@ export class LoginUsecase {
   ) {}
 
   async execute(
-    email: string,
+    name: string,
     password: string,
   ): Promise<{ accessToken: string; refreshToken: string; user: any }> {
-    // 1. Buscar user
-    const user = await this.userRepository.findByEmail(email);
+    // 1. Buscar user pelo nome
+    const user = await this.userRepository.findByName(name);
     if (!user) {
       throw new UnauthorizedException('Usuário ou senha incorretos');
     }
@@ -29,7 +29,7 @@ export class LoginUsecase {
 
     // 3. Gerar tokens
     const accessToken = this.jwtService.sign(
-      { userId: user.getId(), email: user.getEmail(), role: user.getRole() },
+      { userId: user.getId(), name: user.getName(), role: user.getRole() },
       '15m',
     );
     const refreshToken = this.jwtService.signRefresh(
@@ -46,6 +46,7 @@ export class LoginUsecase {
         name: user.getName(),
         email: user.getEmail(),
         role: user.getRole(),
+        needsPasswordChange: user.getNeedsPasswordChange(),
       },
     };
   }
