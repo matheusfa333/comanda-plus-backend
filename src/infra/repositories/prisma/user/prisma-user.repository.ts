@@ -10,11 +10,13 @@ export class PrismaUserRepository implements UserRepository {
   private toEntity(raw: any): User {
     return User.with({
       id: raw.id,
+      username: raw.username,
       name: raw.name,
       email: raw.email,
       password: raw.password,
       role: raw.role as any,
       needsPasswordChange: raw.needsPasswordChange,
+      active: raw.active,
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
     });
@@ -24,11 +26,13 @@ export class PrismaUserRepository implements UserRepository {
     await this.prisma.user.create({
       data: {
         id: user.getId(),
+        username: user.getUsername(),
         name: user.getName(),
         email: user.getEmail(),
         password: user.getPassword(),
         role: user.getRole(),
         needsPasswordChange: user.getNeedsPasswordChange(),
+        active: user.getActive(),
         createdAt: user.getCreatedAt(),
         updatedAt: user.getUpdatedAt(),
       },
@@ -37,6 +41,11 @@ export class PrismaUserRepository implements UserRepository {
 
   async findById(id: string): Promise<User | null> {
     const raw = await this.prisma.user.findUnique({ where: { id } });
+    return raw ? this.toEntity(raw) : null;
+  }
+
+  async findByUsername(username: string): Promise<User | null> {
+    const raw = await this.prisma.user.findUnique({ where: { username } });
     return raw ? this.toEntity(raw) : null;
   }
 
@@ -51,7 +60,7 @@ export class PrismaUserRepository implements UserRepository {
   }
 
   async findAll(): Promise<User[]> {
-    const rows = await this.prisma.user.findMany({ orderBy: { createdAt: 'desc' } });
+    const rows = await this.prisma.user.findMany({ orderBy: { createdAt: 'asc' } });
     return rows.map((r: any) => this.toEntity(r));
   }
 
@@ -63,6 +72,7 @@ export class PrismaUserRepository implements UserRepository {
         role: user.getRole(),
         password: user.getPassword(),
         needsPasswordChange: user.getNeedsPasswordChange(),
+        active: user.getActive(),
         updatedAt: user.getUpdatedAt(),
       },
     });

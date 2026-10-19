@@ -10,7 +10,7 @@ export class PrismaTableRepository implements TableRepository {
   private toEntity(raw: any): Table {
     return Table.with({
       id: raw.id,
-      number: raw.number,
+      identifier: raw.identifier,
       capacity: raw.capacity,
       status: raw.status,
       clientName: raw.clientName,
@@ -20,7 +20,7 @@ export class PrismaTableRepository implements TableRepository {
   }
 
   async findAll(): Promise<Table[]> {
-    const rows = await this.prisma.table.findMany({ orderBy: { number: 'asc' } });
+    const rows = await this.prisma.table.findMany({ orderBy: { createdAt: 'asc' } });
     return rows.map((r: any) => this.toEntity(r));
   }
 
@@ -29,8 +29,8 @@ export class PrismaTableRepository implements TableRepository {
     return raw ? this.toEntity(raw) : null;
   }
 
-  async findByNumber(number: number): Promise<Table | null> {
-    const raw = await this.prisma.table.findUnique({ where: { number } });
+  async findByIdentifier(identifier: string): Promise<Table | null> {
+    const raw = await this.prisma.table.findUnique({ where: { identifier } });
     return raw ? this.toEntity(raw) : null;
   }
 
@@ -38,7 +38,7 @@ export class PrismaTableRepository implements TableRepository {
     await this.prisma.table.create({
       data: {
         id: table.getId(),
-        number: table.getNumber(),
+        identifier: table.getIdentifier(),
         capacity: table.getCapacity(),
         status: table.getStatus(),
         clientName: table.getClientName(),

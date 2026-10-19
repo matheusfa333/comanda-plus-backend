@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Req, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from 'src/infra/web/auth/auth.guard';
 import { ListTablesUsecase } from 'src/usecases/table/list/list-tables.usecase';
 import { OpenTableUsecase } from 'src/usecases/table/open/open-table.usecase';
@@ -20,17 +20,16 @@ export class TableController {
 
   @Post('open')
   @HttpCode(HttpStatus.CREATED)
-  async open(@Body() body: { number: number; capacity?: number; clientName?: string }) {
-    return this.openTableUsecase.execute({
-      number: Number(body.number),
-      capacity: body.capacity,
-      clientName: body.clientName,
-    });
+  async open(@Req() req: any, @Body() body: { identifier: string; capacity?: number; clientName?: string }) {
+    return this.openTableUsecase.execute(
+      { identifier: body.identifier, capacity: body.capacity, clientName: body.clientName },
+      req.username,
+    );
   }
 
   @Post(':id/close')
   @HttpCode(HttpStatus.OK)
-  async close(@Param('id') id: string) {
-    return this.closeTableUsecase.execute(id);
+  async close(@Req() req: any, @Param('id') id: string) {
+    return this.closeTableUsecase.execute(id, req.username, req.role);
   }
 }

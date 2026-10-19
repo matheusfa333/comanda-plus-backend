@@ -9,11 +9,13 @@ datasource db {
 
 model User {
   id                 String   @id @default(uuid())
-  name               String   @unique
+  username           String   @unique // usado no login
+  name               String   @unique // nome de exibição
   email              String?  @unique
   password           String
-  role               String   @default("GARCOM") // ADMIN | GERENTE | GARCOM | KITCHEN
+  role               String   @default("GARCOM") // ADMIN | GERENTE | GARCOM | COZINHA | CAIXA
   needsPasswordChange Boolean @default(true)
+  active             Boolean  @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   orders             Order[]
@@ -21,10 +23,21 @@ model User {
   @@map("user")
 }
 
-model Table {
+model AuditLog {
   id        String   @id @default(uuid())
-  number    Int      @unique
-  capacity  Int
+  action    String   // ex: CONTA_FECHADA, STATUS_ALTERADO, SENHA_RESETADA
+  actor     String   // username de quem fez a ação
+  details   String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("audit_log")
+}
+
+model Table {
+  id         String   @id @default(uuid())
+  identifier String   @unique @map("number") // número ou nome (ex: 5, A3, Varanda)
+  capacity   Int
   status    String   @default("FREE") // FREE | OCCUPIED | RESERVED | CLOSED
   clientName String?
   createdAt DateTime @default(now())
@@ -39,7 +52,7 @@ model Product {
   name                String
   description         String?
   price               Int         @default(0) // preço fixo em centavos (acompanhamentos/bebidas)
-  pricePerGram        Int?        // centavos por grama (carnes vendidas por peso)
+  pricePerKg          Int?        @map("pricePerGram") // centavos por kg (carnes vendidas por peso)
   minGrams            Int?        // pedido mínimo em gramas (carnes)
   category            String      // CARNE | ACOMPANHAMENTO | CALDO | BEBIDA
   isMeat              Boolean     @default(false) // indica se vendido por peso
@@ -78,8 +91,9 @@ model OrderItem {
   id        String  @id @default(uuid())
   orderId   String
   productId String
-  quantity  Int
-  unitPrice Int     // snapshot do preço no momento do pedido
+  quantity  Int     // gramas (carne) ou unidades
+  unitPrice Int     // snapshot do preço: centavos por kg (carne) ou por unidade
+  weighed   Boolean @default(false) // true = carne vendida por peso
   notes     String?
   createdAt DateTime @default(now())
   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)

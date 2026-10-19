@@ -3,7 +3,7 @@ import { Utils } from 'src/shared/utils/utils';
 export type TableStatus = 'FREE' | 'OCCUPIED' | 'CLOSED';
 
 export type TableCreateDto = {
-  number: number;
+  identifier: string;
   capacity?: number;
   clientName?: string | null;
   status?: TableStatus;
@@ -11,7 +11,7 @@ export type TableCreateDto = {
 
 export type TableWithDto = {
   id: string;
-  number: number;
+  identifier: string;
   capacity: number;
   status: TableStatus;
   clientName: string | null;
@@ -22,7 +22,7 @@ export type TableWithDto = {
 export class Table {
   private constructor(
     private readonly id: string,
-    private number: number,
+    private identifier: string,
     private capacity: number,
     private status: TableStatus,
     private clientName: string | null,
@@ -33,7 +33,7 @@ export class Table {
   static create(dto: TableCreateDto): Table {
     return new Table(
       Utils.generateUUID(),
-      dto.number,
+      dto.identifier,
       dto.capacity ?? 4,
       dto.status ?? 'FREE',
       dto.clientName ?? null,
@@ -44,12 +44,12 @@ export class Table {
 
   static with(dto: TableWithDto): Table {
     return new Table(
-      dto.id, dto.number, dto.capacity, dto.status, dto.clientName, dto.createdAt, dto.updatedAt,
+      dto.id, dto.identifier, dto.capacity, dto.status, dto.clientName, dto.createdAt, dto.updatedAt,
     );
   }
 
   getId(): string { return this.id; }
-  getNumber(): number { return this.number; }
+  getIdentifier(): string { return this.identifier; }
   getCapacity(): number { return this.capacity; }
   getStatus(): TableStatus { return this.status; }
   getClientName(): string | null { return this.clientName; }

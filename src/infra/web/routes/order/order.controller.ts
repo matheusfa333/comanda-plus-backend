@@ -21,11 +21,10 @@ export class OrderController {
     @Req() req: any,
     @Body() body: { tableId: string; items: { productId: string; quantity: number; notes?: string }[] },
   ) {
-    return this.createOrderUsecase.execute({
-      tableId: body.tableId,
-      userId: req.userId,
-      items: body.items,
-    });
+    return this.createOrderUsecase.execute(
+      { tableId: body.tableId, userId: req.userId, items: body.items },
+      req.username,
+    );
   }
 
   @Get('kitchen')
@@ -40,7 +39,7 @@ export class OrderController {
 
   @Patch(':id/status')
   @HttpCode(HttpStatus.OK)
-  async updateStatus(@Param('id') id: string, @Body() body: { status: string }) {
-    return this.updateOrderStatusUsecase.execute(id, body.status);
+  async updateStatus(@Req() req: any, @Param('id') id: string, @Body() body: { status: string }) {
+    return this.updateOrderStatusUsecase.execute(id, body.status, req.username);
   }
 }

@@ -14,8 +14,8 @@ export class AuthController {
   @IsPublic()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() body: { name: string; password: string }) {
-    return this.loginUsecase.execute(body.name, body.password);
+  async login(@Body() body: { username: string; password: string }) {
+    return this.loginUsecase.execute(body.username, body.password);
   }
 
   @UseGuards(AuthGuard)

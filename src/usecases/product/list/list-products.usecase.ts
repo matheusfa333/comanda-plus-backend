@@ -6,11 +6,14 @@ export interface ProductListItem {
   name: string;
   description: string | null;
   price: number;
-  pricePerGram: number | null;
+  pricePerKg: number | null;
   minGrams: number | null;
   category: string;
   isMeat: boolean;
   available: boolean;
+  stock: number; // gramas (carne) ou unidades
+  minStock: number;
+  lowStock: boolean;
 }
 
 @Injectable()
@@ -19,16 +22,21 @@ export class ListProductsUsecase {
 
   async execute(): Promise<ProductListItem[]> {
     const products = await this.productRepository.findAll();
-    return products.map((p) => ({
-      id: p.getId(),
-      name: p.getName(),
-      description: p.getDescription(),
-      price: p.getPrice(),
-      pricePerGram: p.getPricePerGram(),
-      minGrams: p.getMinGrams(),
-      category: p.getCategory(),
-      isMeat: p.getIsMeat(),
-      available: p.getAvailable(),
-    }));
+    return products
+      .filter((p) => p.getAvailable())
+      .map((p) => ({
+        id: p.getId(),
+        name: p.getName(),
+        description: p.getDescription(),
+        price: p.getPrice(),
+        pricePerKg: p.getPricePerKg(),
+        minGrams: p.getMinGrams(),
+        category: p.getCategory(),
+        isMeat: p.getIsMeat(),
+        available: p.getAvailable(),
+        stock: p.getStock(),
+        minStock: p.getMinStock(),
+        lowStock: p.isLowStock(),
+      }));
   }
 }

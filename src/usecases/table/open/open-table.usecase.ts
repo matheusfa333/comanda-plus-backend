@@ -1,38 +1,44 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { TableRepository } from 'src/domain/repositories/table.repository.interface';
+import { AuditLogRepository } from 'src/domain/repositories/audit-log.repository.interface';
 import { Table } from 'src/domain/entities/table/table.entity';
+import { AuditLog } from 'src/domain/entities/audit-log/audit-log.entity';
 
 @Injectable()
 export class OpenTableUsecase {
-  constructor(private readonly tableRepository: TableRepository) {}
+  constructor(
+    private readonly tableRepository: TableRepository,
+    private readonly auditLogRepository: AuditLogRepository,
+  ) {}
 
-  async execute(dto: {
-    number: number;
-    capacity?: number;
-    clientName?: string | null;
-  }): Promise<{ id: string; message: string }> {
-    if (!dto.number || dto.number <= 0) {
-      throw new BadRequestException('Número da mesa inválido');
-    }
+  async execute(
+    dto: { identifier: string; capacity?: number; clientName?: string | null },
+    actor: string,
+  ): Promise<{ id: string; message: string }> {
+    const identifier = String(dto.identifier ?? '').trim();
+    if (!identifier) throw new BadRequestException('Informe o número ou identificador da mesa');
+    if (identifier.length > 30) throw new BadRequestException('Identificador muito longo (máximo 30 caracteres)');
+    const clientName = dto.clientName?.trim() || null;
 
-    const existing = await this.tableRepository.findByNumber(dto.number);
+    const existing = await this.tableRepository.findByIdentifier(identifier);
+    let tableId: string;
 
     if (existing) {
       if (existing.getStatus() === 'OCCUPIED') {
-        throw new BadRequestException(`A mesa ${dto.number} já está ocupada`);
+        throw new BadRequestException(`A mesa ${identifier} já está ocupada`);
       }
-      existing.occupy(dto.clientName);
+      existing.occupy(clientName);
       await this.tableRepository.update(existing);
-      return { id: existing.getId(), message: `Mesa ${dto.number} aberta` };
+      tableId = existing.getId();
+    } else {
+      const table = Table.create({ identifier, capacity: dto.capacity, clientName, status: 'OCCUPIED' });
+      await this.tableRepository.create(table);
+      tableId = table.getId();
     }
 
-    const table = Table.create({
-      number: dto.number,
-      capacity: dto.capacity,
-      clientName: dto.clientName,
-      status: 'OCCUPIED',
-    });
-    await this.tableRepository.create(table);
-    return { id: table.getId(), message: `Mesa ${dto.number} aberta` };
+    await this.auditLogRepository.create(
+      AuditLog.create('MESA_ABERTA', actor, `Mesa ${identifier}${clientName ? ` — ${clientName}` : ''}`),
+    );
+    return { id: tableId, message: `Mesa ${identifier} aberta` };
   }
 }

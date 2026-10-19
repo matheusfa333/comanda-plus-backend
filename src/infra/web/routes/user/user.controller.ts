@@ -1,9 +1,10 @@
-import { Controller, Post, Get, Delete, Body, Param, UseGuards, Req, ForbiddenException, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Patch, Body, Param, UseGuards, Req, ForbiddenException, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from 'src/infra/web/auth/auth.guard';
 import { CreateUserUsecase } from 'src/usecases/user/create/create-user.usecase';
 import { ListUsersUsecase } from 'src/usecases/user/list/list-users.usecase';
 import { DeleteUserUsecase } from 'src/usecases/user/delete/delete-user.usecase';
 import { ResetPasswordUsecase } from 'src/usecases/user/reset-password/reset-password.usecase';
+import { SetUserActiveUsecase } from 'src/usecases/user/set-active/set-user-active.usecase';
 
 @Controller('users')
 @UseGuards(AuthGuard)
@@ -13,6 +14,7 @@ export class UserController {
     private readonly listUsersUsecase: ListUsersUsecase,
     private readonly deleteUserUsecase: DeleteUserUsecase,
     private readonly resetPasswordUsecase: ResetPasswordUsecase,
+    private readonly setUserActiveUsecase: SetUserActiveUsecase,
   ) {}
 
   private ensureAdmin(req: any) {
@@ -31,37 +33,38 @@ export class UserController {
   @HttpCode(HttpStatus.CREATED)
   async create(
     @Req() req: any,
-    @Body() body: { name: string; email?: string; password?: string; role: string },
+    @Body() body: { username: string; name: string; email?: string; password?: string; role: string },
   ) {
     this.ensureAdmin(req);
-    return this.createUserUsecase.execute({
-      name: body.name,
-      email: body.email,
-      password: body.password,
-      role: body.role as any,
-    });
+    return this.createUserUsecase.execute(
+      { username: body.username, name: body.name, email: body.email, password: body.password, role: body.role as any },
+      req.username,
+    );
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   async remove(@Req() req: any, @Param('id') id: string) {
     this.ensureAdmin(req);
-    return this.deleteUserUsecase.execute(id, req.userId);
+    return this.deleteUserUsecase.execute(id, req.userId, req.username);
   }
 
   @Post(':id/reset-password')
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Req() req: any, @Param('id') id: string) {
     this.ensureAdmin(req);
-    return this.resetPasswordUsecase.execute(id);
+    return this.resetPasswordUsecase.execute(id, req.username);
+  }
+
+  @Patch(':id/active')
+  @HttpCode(HttpStatus.OK)
+  async setActive(@Req() req: any, @Param('id') id: string, @Body() body: { active: boolean }) {
+    this.ensureAdmin(req);
+    return this.setUserActiveUsecase.execute(id, !!body.active, req.userId, req.username);
   }
 
   @Get('me')
   async getMe(@Req() req: any) {
-    return {
-      userId: req.userId,
-      role: req.role,
-      message: 'Usuário autenticado',
-    };
+    return { userId: req.userId, role: req.role, message: 'Usuário autenticado' };
   }
 }

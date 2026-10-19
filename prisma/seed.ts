@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { buildMenu } from './menu';
 
 const prisma = new PrismaClient();
 
@@ -9,85 +10,42 @@ async function main() {
   // Senha padrão inicial (todos trocam no primeiro login)
   const defaultPassword = await bcrypt.hash('123', 10);
 
-  // Usuários (login por NOME, senha inicial "123")
+  // Usuários (login pelo username, senha inicial "123")
   const users = [
-    { name: 'Admin', email: 'admin@comanda.com', role: 'ADMIN' },
-    { name: 'Gerente', email: 'gerente@comanda.com', role: 'GERENTE' },
-    { name: 'Carlos', email: 'carlos@comanda.com', role: 'GARCOM' },
-    { name: 'Cozinha', email: 'cozinha@comanda.com', role: 'COZINHA' },
+    { username: 'admin', name: 'Admin', email: 'admin@comanda.com', role: 'ADMIN' },
+    { username: 'gerente', name: 'Gerente', email: 'gerente@comanda.com', role: 'GERENTE' },
+    { username: 'carlos', name: 'Carlos', email: 'carlos@comanda.com', role: 'GARCOM' },
+    { username: 'cozinha', name: 'Cozinha', email: 'cozinha@comanda.com', role: 'COZINHA' },
+    { username: 'ana', name: 'Ana', email: 'ana@comanda.com', role: 'CAIXA' },
   ];
 
   for (const user of users) {
-    const existing = await prisma.user.findUnique({ where: { name: user.name } });
+    const existing = await prisma.user.findUnique({ where: { username: user.username } });
     if (!existing) {
-      await prisma.user.create({
-        data: {
-          name: user.name,
-          email: user.email,
-          password: defaultPassword,
-          role: user.role,
-          needsPasswordChange: true,
-        },
-      });
-      console.log(`✅ Criado: ${user.name} (${user.role})`);
+      await prisma.user.create({ data: { ...user, password: defaultPassword, needsPasswordChange: true } });
+      console.log(`✅ Criado: ${user.name} (${user.username}) — ${user.role}`);
     } else {
-      console.log(`⏭️  Já existe: ${user.name}`);
+      console.log(`⏭️  Já existe: ${user.username}`);
     }
   }
 
-  // Mesas
-  const tables = [
-    { number: 1, capacity: 2 },
-    { number: 2, capacity: 2 },
-    { number: 3, capacity: 4 },
-    { number: 4, capacity: 4 },
-    { number: 5, capacity: 6 },
-    { number: 6, capacity: 6 },
-    { number: 7, capacity: 8 },
-    { number: 8, capacity: 8 },
-  ];
-
-  for (const table of tables) {
-    const existing = await prisma.table.findUnique({ where: { number: table.number } });
+  // Mesas (identificador pode ser número ou nome)
+  for (let n = 1; n <= 8; n++) {
+    const identifier = String(n);
+    const existing = await prisma.table.findUnique({ where: { identifier } });
     if (!existing) {
-      await prisma.table.create({ data: { ...table, status: 'FREE' } as any });
-      console.log(`✅ Criada mesa: ${table.number}`);
-    } else {
-      console.log(`⏭️  Mesa ${table.number} já existe`);
+      await prisma.table.create({ data: { identifier, capacity: n <= 2 ? 2 : n <= 6 ? 4 : 8, status: 'FREE' } });
+      console.log(`✅ Criada mesa: ${identifier}`);
     }
   }
 
-  // Cardápio do Quintal do Roger
-  const products = [
-    // Carnes (vendidas por grama, mínimo 300g)
-    { name: 'Bananinha', category: 'CARNE', isMeat: true, pricePerGram: 5, minGrams: 300 },
-    { name: 'Maçã de Peito', category: 'CARNE', isMeat: true, pricePerGram: 4, minGrams: 300 },
-    { name: 'Picanha', category: 'CARNE', isMeat: true, pricePerGram: 6, minGrams: 300 },
-    { name: 'Fraldinha', category: 'CARNE', isMeat: true, pricePerGram: 5, minGrams: 300 },
-    { name: 'Cupim', category: 'CARNE', isMeat: true, pricePerGram: 4, minGrams: 300 },
-
-    // Acompanhamentos (preço fixo)
-    { name: 'Arroz Branco', category: 'ACOMPANHAMENTO', price: 800 },
-    { name: 'Batata Frita', category: 'ACOMPANHAMENTO', price: 1200 },
-    { name: 'Fritas com Bacon e Queijo', category: 'ACOMPANHAMENTO', price: 1800 },
-    { name: 'Caldo de Feijão', category: 'CALDO', price: 600 },
-    { name: 'Caldo de Frango', category: 'CALDO', price: 700 },
-
-    // Bebidas (marcas reais)
-    { name: 'Água Mineral 500ml', category: 'BEBIDA', price: 300 },
-    { name: 'Água com Gás 500ml', category: 'BEBIDA', price: 400 },
-    { name: 'Coca-Cola Lata 350ml', category: 'BEBIDA', price: 600 },
-    { name: 'Guaraná Antarctica Lata 350ml', category: 'BEBIDA', price: 600 },
-    { name: 'Coca-Cola 600ml', category: 'BEBIDA', price: 900 },
-    { name: 'Brahma 600ml', category: 'BEBIDA', price: 1200 },
-    { name: 'Heineken 600ml', category: 'BEBIDA', price: 1500 },
-    { name: 'Suco Natural 500ml', category: 'BEBIDA', price: 900 },
-  ];
+  // Cardápio do Quintal do Roger (definido em prisma/menu.ts)
+  const products = buildMenu();
 
   for (const product of products) {
     const existing = await prisma.product.findFirst({ where: { name: product.name } });
     if (!existing) {
-      await prisma.product.create({ data: { ...product, available: true } as any });
+      await prisma.product.create({ data: { ...product, available: true } });
       console.log(`✅ Criado produto: ${product.name}`);
     } else {
       console.log(`⏭️  Produto ${product.name} já existe`);
@@ -98,7 +56,7 @@ async function main() {
 }
 
 main()
-  .catch(e => {
+  .catch((e) => {
     console.error('❌ Erro no seed:', e);
     process.exit(1);
   })

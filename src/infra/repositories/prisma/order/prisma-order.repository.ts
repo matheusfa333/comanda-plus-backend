@@ -18,6 +18,7 @@ export class PrismaOrderRepository implements OrderRepository {
         productId: i.productId,
         quantity: i.quantity,
         unitPrice: i.unitPrice,
+        weighed: i.weighed,
         notes: i.notes,
       }),
     );
@@ -51,6 +52,7 @@ export class PrismaOrderRepository implements OrderRepository {
             productId: i.getProductId(),
             quantity: i.getQuantity(),
             unitPrice: i.getUnitPrice(),
+            weighed: i.getWeighed(),
             notes: i.getNotes(),
           })),
         },
@@ -72,6 +74,14 @@ export class PrismaOrderRepository implements OrderRepository {
     return rows.map((r: any) => this.toEntity(r));
   }
 
+  async findAllActive(): Promise<Order[]> {
+    const rows = await this.prisma.order.findMany({
+      where: { status: { in: ACTIVE_STATUSES } },
+      include: { items: true },
+    });
+    return rows.map((r: any) => this.toEntity(r));
+  }
+
   async findActiveForKitchen(): Promise<Order[]> {
     const rows = await this.prisma.order.findMany({
       where: { status: { in: KITCHEN_STATUSES } },
@@ -79,6 +89,18 @@ export class PrismaOrderRepository implements OrderRepository {
       orderBy: { createdAt: 'asc' },
     });
     return rows.map((r: any) => this.toEntity(r));
+  }
+
+  async findClosedSince(since: Date): Promise<Order[]> {
+    const rows = await this.prisma.order.findMany({
+      where: { status: 'CLOSED', updatedAt: { gte: since } },
+      include: { items: true },
+    });
+    return rows.map((r: any) => this.toEntity(r));
+  }
+
+  async countByUserId(userId: string): Promise<number> {
+    return this.prisma.order.count({ where: { userId } });
   }
 
   async update(order: Order): Promise<void> {

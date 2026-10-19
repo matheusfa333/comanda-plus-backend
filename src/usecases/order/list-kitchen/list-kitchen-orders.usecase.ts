@@ -5,7 +5,7 @@ import { TableRepository } from 'src/domain/repositories/table.repository.interf
 
 export interface KitchenOrderView {
   id: string;
-  tableNumber: number;
+  tableIdentifier: string;
   clientName: string | null;
   status: string;
   createdAt: Date;
@@ -31,7 +31,7 @@ export class ListKitchenOrdersUsecase {
       const table = tableById.get(o.getTableId());
       return {
         id: o.getId(),
-        tableNumber: table?.getNumber() ?? 0,
+        tableIdentifier: table?.getIdentifier() ?? "?",
         clientName: table?.getClientName() ?? null,
         status: o.getStatus(),
         createdAt: o.getCreatedAt(),

@@ -12,11 +12,11 @@ export class LoginUsecase {
   ) {}
 
   async execute(
-    name: string,
+    username: string,
     password: string,
   ): Promise<{ accessToken: string; refreshToken: string; user: any }> {
-    // 1. Buscar user pelo nome
-    const user = await this.userRepository.findByName(name);
+    // 1. Buscar user pelo username
+    const user = await this.userRepository.findByUsername((username || '').trim().toLowerCase());
     if (!user) {
       throw new UnauthorizedException('Usuário ou senha incorretos');
     }
@@ -27,22 +27,25 @@ export class LoginUsecase {
       throw new UnauthorizedException('Usuário ou senha incorretos');
     }
 
-    // 3. Gerar tokens (8h cobre um turno de trabalho sem deslogar)
+    // 3. Usuário desativado não entra
+    if (!user.getActive()) {
+      throw new UnauthorizedException('Usuário desativado. Procure o administrador.');
+    }
+
+    // 4. Gerar tokens (8h cobre um turno de trabalho sem deslogar)
     const accessToken = this.jwtService.sign(
-      { userId: user.getId(), name: user.getName(), role: user.getRole() },
+      { userId: user.getId(), username: user.getUsername(), name: user.getName(), role: user.getRole() },
       '8h',
     );
-    const refreshToken = this.jwtService.signRefresh(
-      { userId: user.getId() },
-      '7d',
-    );
+    const refreshToken = this.jwtService.signRefresh({ userId: user.getId() }, '7d');
 
-    // 4. Retornar (sem expor password)
+    // 5. Retornar (sem expor password)
     return {
       accessToken,
       refreshToken,
       user: {
         id: user.getId(),
+        username: user.getUsername(),
         name: user.getName(),
         email: user.getEmail(),
         role: user.getRole(),
