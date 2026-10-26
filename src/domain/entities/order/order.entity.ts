@@ -18,6 +18,7 @@ export type OrderWithDto = {
   totalAmount: number;
   notes: string | null;
   items: OrderItem[];
+  closedAccountId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -33,6 +34,7 @@ export class Order {
     private readonly items: OrderItem[],
     private readonly createdAt: Date,
     private updatedAt: Date,
+    private readonly closedAccountId: string | null = null,
   ) {}
 
   static create(dto: OrderCreateDto): Order {
@@ -53,7 +55,7 @@ export class Order {
   static with(dto: OrderWithDto): Order {
     return new Order(
       dto.id, dto.tableId, dto.userId, dto.status, dto.totalAmount,
-      dto.notes, dto.items, dto.createdAt, dto.updatedAt,
+      dto.notes, dto.items, dto.createdAt, dto.updatedAt, dto.closedAccountId ?? null,
     );
   }
 
@@ -65,6 +67,7 @@ export class Order {
   getNotes(): string | null { return this.notes; }
   getItems(): OrderItem[] { return this.items; }
   getCreatedAt(): Date { return this.createdAt; }
+  getClosedAccountId(): string | null { return this.closedAccountId; }
   getUpdatedAt(): Date { return this.updatedAt; }
 
   updateStatus(status: OrderStatus): void {

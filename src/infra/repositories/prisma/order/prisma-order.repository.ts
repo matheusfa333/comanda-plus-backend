@@ -30,6 +30,7 @@ export class PrismaOrderRepository implements OrderRepository {
       totalAmount: raw.totalAmount,
       notes: raw.notes,
       items,
+      closedAccountId: raw.closedAccountId,
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
     });
@@ -91,10 +92,20 @@ export class PrismaOrderRepository implements OrderRepository {
     return rows.map((r: any) => this.toEntity(r));
   }
 
-  async findClosedSince(since: Date): Promise<Order[]> {
+  async findClosedBetween(from: Date, to: Date): Promise<Order[]> {
     const rows = await this.prisma.order.findMany({
-      where: { status: 'CLOSED', updatedAt: { gte: since } },
+      where: { status: 'CLOSED', updatedAt: { gte: from, lte: to } },
       include: { items: true },
+    });
+    return rows.map((r: any) => this.toEntity(r));
+  }
+
+  async findByClosedAccountIds(ids: string[]): Promise<Order[]> {
+    if (ids.length === 0) return [];
+    const rows = await this.prisma.order.findMany({
+      where: { closedAccountId: { in: ids } },
+      include: { items: true },
+      orderBy: { createdAt: 'asc' },
     });
     return rows.map((r: any) => this.toEntity(r));
   }
@@ -115,10 +126,10 @@ export class PrismaOrderRepository implements OrderRepository {
     });
   }
 
-  async closeByTableId(tableId: string): Promise<void> {
+  async closeByTableId(tableId: string, closedAccountId: string): Promise<void> {
     await this.prisma.order.updateMany({
       where: { tableId, status: { in: ACTIVE_STATUSES } },
-      data: { status: 'CLOSED', updatedAt: new Date() },
+      data: { status: 'CLOSED', closedAccountId, updatedAt: new Date() },
     });
   }
 }

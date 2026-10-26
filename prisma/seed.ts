@@ -16,7 +16,6 @@ async function main() {
     { username: 'gerente', name: 'Gerente', email: 'gerente@comanda.com', role: 'GERENTE' },
     { username: 'carlos', name: 'Carlos', email: 'carlos@comanda.com', role: 'GARCOM' },
     { username: 'cozinha', name: 'Cozinha', email: 'cozinha@comanda.com', role: 'COZINHA' },
-    { username: 'ana', name: 'Ana', email: 'ana@comanda.com', role: 'CAIXA' },
   ];
 
   for (const user of users) {

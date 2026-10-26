@@ -40,8 +40,8 @@ export class ProductController {
 
   @Patch(':id/stock')
   @HttpCode(HttpStatus.OK)
-  async adjustStock(@Req() req: any, @Param('id') id: string, @Body() body: { stock: number }) {
+  async adjustStock(@Req() req: any, @Param('id') id: string, @Body() body: { stock: number; reason?: string }) {
     this.ensureAdmin(req);
-    return this.adjustStockUsecase.execute(id, Number(body.stock), req.username);
+    return this.adjustStockUsecase.execute(id, Number(body.stock), req.username, body.reason);
   }
 }

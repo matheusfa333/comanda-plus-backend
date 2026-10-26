@@ -7,6 +7,8 @@ import { PrismaUserRepository } from 'src/infra/repositories/prisma/user/prisma-
 import { PrismaAuditLogRepository } from 'src/infra/repositories/prisma/audit-log/prisma-audit-log.repository';
 import { GetReportsUsecase } from 'src/usecases/report/get-reports/get-reports.usecase';
 import { ListLogsUsecase } from 'src/usecases/report/list-logs/list-logs.usecase';
+import { ListClosedAccountsUsecase } from 'src/usecases/report/list-closed-accounts/list-closed-accounts.usecase';
+import { PrismaClosedAccountRepository } from 'src/infra/repositories/prisma/closed-account/prisma-closed-account.repository';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
@@ -17,11 +19,18 @@ import { AuthModule } from '../auth/auth.module';
     PrismaProductRepository,
     PrismaUserRepository,
     PrismaAuditLogRepository,
+    PrismaClosedAccountRepository,
     {
       provide: GetReportsUsecase,
-      useFactory: (o: PrismaOrderRepository, p: PrismaProductRepository, u: PrismaUserRepository) =>
-        new GetReportsUsecase(o, p, u),
-      inject: [PrismaOrderRepository, PrismaProductRepository, PrismaUserRepository],
+      useFactory: (o: PrismaOrderRepository, p: PrismaProductRepository, u: PrismaUserRepository, c: PrismaClosedAccountRepository) =>
+        new GetReportsUsecase(o, p, u, c),
+      inject: [PrismaOrderRepository, PrismaProductRepository, PrismaUserRepository, PrismaClosedAccountRepository],
+    },
+    {
+      provide: ListClosedAccountsUsecase,
+      useFactory: (c: PrismaClosedAccountRepository, o: PrismaOrderRepository, p: PrismaProductRepository, u: PrismaUserRepository) =>
+        new ListClosedAccountsUsecase(c, o, p, u),
+      inject: [PrismaClosedAccountRepository, PrismaOrderRepository, PrismaProductRepository, PrismaUserRepository],
     },
     {
       provide: ListLogsUsecase,

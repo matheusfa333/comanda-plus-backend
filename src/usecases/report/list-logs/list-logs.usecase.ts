@@ -13,11 +13,9 @@ export interface LogView {
 export class ListLogsUsecase {
   constructor(private readonly auditLogRepository: AuditLogRepository) {}
 
-  // Logs do dia (a partir da meia-noite)
-  async execute(): Promise<LogView[]> {
-    const since = new Date();
-    since.setHours(0, 0, 0, 0);
-    const logs = await this.auditLogRepository.findSince(since);
+  // Logs do período, opcionalmente filtrados pelo tipo de ação
+  async execute(from: Date, to: Date, action?: string): Promise<LogView[]> {
+    const logs = await this.auditLogRepository.findBetween(from, to, action);
     return logs.map((l) => ({
       id: l.getId(),
       action: l.getAction(),

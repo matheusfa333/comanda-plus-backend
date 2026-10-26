@@ -29,9 +29,9 @@ export class PrismaAuditLogRepository implements AuditLogRepository {
     });
   }
 
-  async findSince(since: Date): Promise<AuditLog[]> {
+  async findBetween(from: Date, to: Date, action?: string): Promise<AuditLog[]> {
     const rows = await this.prisma.auditLog.findMany({
-      where: { createdAt: { gte: since } },
+      where: { createdAt: { gte: from, lte: to }, ...(action ? { action } : {}) },
       orderBy: { createdAt: 'desc' },
     });
     return rows.map((r: any) => this.toEntity(r));

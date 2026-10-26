@@ -13,7 +13,7 @@ model User {
   name               String   @unique // nome de exibição
   email              String?  @unique
   password           String
-  role               String   @default("GARCOM") // ADMIN | GERENTE | GARCOM | COZINHA | CAIXA
+  role               String   @default("GARCOM") // ADMIN | GERENTE | GARCOM | COZINHA
   needsPasswordChange Boolean @default(true)
   active             Boolean  @default(true)
   createdAt          DateTime @default(now())
@@ -40,9 +40,11 @@ model Table {
   capacity   Int
   status    String   @default("FREE") // FREE | OCCUPIED | RESERVED | CLOSED
   clientName String?
+  openedAt  DateTime? // quando a mesa foi aberta (sessão atual)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   orders    Order[]
+  closedAccounts ClosedAccount[]
 
   @@map("table")
 }
@@ -77,13 +79,16 @@ model Order {
   notes       String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  closedAccountId String? // conta em que o pedido foi pago
   table       Table       @relation(fields: [tableId], references: [id], onDelete: Cascade)
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  closedAccount ClosedAccount? @relation(fields: [closedAccountId], references: [id], onDelete: SetNull)
   items       OrderItem[]
   estoqueMovimentacao EstoqueMovimentacao[]
 
   @@index([tableId])
   @@index([userId])
+  @@index([closedAccountId])
   @@map("order")
 }
 
@@ -119,4 +124,39 @@ model EstoqueMovimentacao {
   @@index([productId])
   @@index([pedidoId])
   @@map("estoque_movimentacao")
+}
+
+// Conta fechada (registro permanente de cada fechamento de mesa)
+model ClosedAccount {
+  id              String   @id @default(uuid())
+  tableId         String
+  tableIdentifier String   // snapshot do número/nome da mesa
+  clientName      String?
+  openedAt        DateTime
+  closedAt        DateTime @default(now())
+  closedBy        String   // username de quem fechou
+  subtotal        Int      // centavos, sem taxa
+  serviceFee      Int      // centavos (10%)
+  total           Int      // centavos
+  table           Table    @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  orders          Order[]
+  payments        AccountPayment[]
+
+  @@index([closedAt])
+  @@index([tableId])
+  @@map("closed_account")
+}
+
+// Forma de pagamento de uma conta fechada (uma conta pode ser dividida em vários pagamentos)
+model AccountPayment {
+  id              String        @id @default(uuid())
+  closedAccountId String
+  method          String        // DINHEIRO | PIX | DEBITO | CREDITO
+  amount          Int           // centavos
+  installments    Int           @default(1) // parcelas (só crédito)
+  createdAt       DateTime      @default(now())
+  closedAccount   ClosedAccount @relation(fields: [closedAccountId], references: [id], onDelete: Cascade)
+
+  @@index([closedAccountId])
+  @@map("account_payment")
 }

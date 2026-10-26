@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, Req, UseGuards, HttpCode, HttpStatu
 import { AuthGuard } from 'src/infra/web/auth/auth.guard';
 import { ListTablesUsecase } from 'src/usecases/table/list/list-tables.usecase';
 import { OpenTableUsecase } from 'src/usecases/table/open/open-table.usecase';
+import { AccountPayment } from 'src/domain/entities/closed-account/closed-account.entity';
 import { CloseTableUsecase } from 'src/usecases/table/close/close-table.usecase';
 
 @Controller('tables')
@@ -29,7 +30,7 @@ export class TableController {
 
   @Post(':id/close')
   @HttpCode(HttpStatus.OK)
-  async close(@Req() req: any, @Param('id') id: string) {
-    return this.closeTableUsecase.execute(id, req.username, req.role);
+  async close(@Req() req: any, @Param('id') id: string, @Body() body: { payments?: AccountPayment[] }) {
+    return this.closeTableUsecase.execute(id, req.username, req.role, body?.payments ?? []);
   }
 }

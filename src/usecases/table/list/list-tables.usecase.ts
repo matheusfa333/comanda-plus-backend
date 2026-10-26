@@ -34,7 +34,7 @@ export class ListTablesUsecase {
         capacity: t.getCapacity(),
         status: t.getStatus(),
         clientName: t.getClientName(),
-        openedAt: t.getUpdatedAt(),
+        openedAt: t.getOpenedAt() ?? t.getUpdatedAt(),
         subtotal: orders.reduce((s, o) => s + o.getTotalAmount(), 0),
         pendingOrders: orders.filter((o) => o.getStatus() !== 'DELIVERED').length,
       };

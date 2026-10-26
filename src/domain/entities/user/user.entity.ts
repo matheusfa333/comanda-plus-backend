@@ -1,8 +1,8 @@
 import { Utils } from 'src/shared/utils/utils';
 
-export type UserRole = 'ADMIN' | 'GERENTE' | 'GARCOM' | 'COZINHA' | 'CAIXA';
+export type UserRole = 'ADMIN' | 'GERENTE' | 'GARCOM' | 'COZINHA';
 
-export const USER_ROLES: UserRole[] = ['ADMIN', 'GERENTE', 'GARCOM', 'COZINHA', 'CAIXA'];
+export const USER_ROLES: UserRole[] = ['ADMIN', 'GERENTE', 'GARCOM', 'COZINHA'];
 
 export type UserCreateDto = {
   username: string;

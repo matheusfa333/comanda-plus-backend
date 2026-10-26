@@ -14,6 +14,7 @@ export class PrismaTableRepository implements TableRepository {
       capacity: raw.capacity,
       status: raw.status,
       clientName: raw.clientName,
+      openedAt: raw.openedAt,
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
     });
@@ -42,6 +43,7 @@ export class PrismaTableRepository implements TableRepository {
         capacity: table.getCapacity(),
         status: table.getStatus(),
         clientName: table.getClientName(),
+        openedAt: table.getOpenedAt(),
         createdAt: table.getCreatedAt(),
         updatedAt: table.getUpdatedAt(),
       },
@@ -54,6 +56,7 @@ export class PrismaTableRepository implements TableRepository {
       data: {
         status: table.getStatus(),
         clientName: table.getClientName(),
+        openedAt: table.getOpenedAt(),
         capacity: table.getCapacity(),
         updatedAt: table.getUpdatedAt(),
       },
