@@ -10,6 +10,7 @@ export interface OrderItemView {
   quantity: number;
   unitPrice: number;
   subtotal: number;
+  notes: string | null;
 }
 
 export interface OrderView {
@@ -52,6 +53,7 @@ export class ListOrdersByTableUsecase {
           quantity: it.getQuantity(),
           unitPrice: it.getUnitPrice(),
           subtotal: it.getSubtotal(),
+          notes: it.getNotes(),
         };
       });
       return {

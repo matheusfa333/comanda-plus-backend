@@ -22,7 +22,7 @@ export interface ClosedAccountView {
     createdAt: Date;
     waiter: string;
     subtotal: number;
-    items: { productName: string; isMeat: boolean; quantity: number; unitPrice: number; subtotal: number }[];
+    items: { productName: string; isMeat: boolean; quantity: number; unitPrice: number; subtotal: number; notes: string | null }[];
   }[];
 }
 
@@ -66,6 +66,7 @@ export class ListClosedAccountsUsecase {
               quantity: it.getQuantity(),
               unitPrice: it.getUnitPrice(),
               subtotal: it.getSubtotal(),
+              notes: it.getNotes(),
             };
           }),
         }));

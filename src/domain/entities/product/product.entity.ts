@@ -1,8 +1,8 @@
 import { Utils } from 'src/shared/utils/utils';
 
-export type ProductCategory = 'CARNE' | 'ACOMPANHAMENTO' | 'CALDO' | 'BEBIDA';
+export type ProductCategory = 'CARNE' | 'ACOMPANHAMENTO' | 'CALDO' | 'BEBIDA' | 'OUTROS';
 
-export const PRODUCT_CATEGORIES: ProductCategory[] = ['CARNE', 'ACOMPANHAMENTO', 'CALDO', 'BEBIDA'];
+export const PRODUCT_CATEGORIES: ProductCategory[] = ['CARNE', 'ACOMPANHAMENTO', 'CALDO', 'BEBIDA', 'OUTROS'];
 
 // Carnes: estoque e pedido em GRAMAS, preço em centavos por kg.
 // Demais itens: estoque e pedido em UNIDADES, preço em centavos por unidade.

@@ -16,6 +16,7 @@ model User {
   role               String   @default("GARCOM") // ADMIN | GERENTE | GARCOM | COZINHA
   needsPasswordChange Boolean @default(true)
   active             Boolean  @default(true)
+  deactivatedAt      DateTime? // quando foi desativado (exclusão só 30 dias depois)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   orders             Order[]
@@ -56,7 +57,7 @@ model Product {
   price               Int         @default(0) // preço fixo em centavos (acompanhamentos/bebidas)
   pricePerKg          Int?        @map("pricePerGram") // centavos por kg (carnes vendidas por peso)
   minGrams            Int?        // pedido mínimo em gramas (carnes)
-  category            String      // CARNE | ACOMPANHAMENTO | CALDO | BEBIDA
+  category            String      // CARNE | ACOMPANHAMENTO | CALDO | BEBIDA | OUTROS
   isMeat              Boolean     @default(false) // indica se vendido por peso
   available           Boolean     @default(true)
   quantidadeTotal     Int         @default(0)

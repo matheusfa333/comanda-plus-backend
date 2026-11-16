@@ -17,6 +17,7 @@ export class PrismaUserRepository implements UserRepository {
       role: raw.role as any,
       needsPasswordChange: raw.needsPasswordChange,
       active: raw.active,
+      deactivatedAt: raw.deactivatedAt,
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
     });
@@ -33,6 +34,7 @@ export class PrismaUserRepository implements UserRepository {
         role: user.getRole(),
         needsPasswordChange: user.getNeedsPasswordChange(),
         active: user.getActive(),
+        deactivatedAt: user.getDeactivatedAt(),
         createdAt: user.getCreatedAt(),
         updatedAt: user.getUpdatedAt(),
       },
@@ -45,7 +47,9 @@ export class PrismaUserRepository implements UserRepository {
   }
 
   async findByUsername(username: string): Promise<User | null> {
-    const raw = await this.prisma.user.findUnique({ where: { username } });
+    const raw = await this.prisma.user.findFirst({
+      where: { username: { equals: username.trim(), mode: 'insensitive' } },
+    });
     return raw ? this.toEntity(raw) : null;
   }
 
@@ -73,6 +77,7 @@ export class PrismaUserRepository implements UserRepository {
         password: user.getPassword(),
         needsPasswordChange: user.getNeedsPasswordChange(),
         active: user.getActive(),
+        deactivatedAt: user.getDeactivatedAt(),
         updatedAt: user.getUpdatedAt(),
       },
     });

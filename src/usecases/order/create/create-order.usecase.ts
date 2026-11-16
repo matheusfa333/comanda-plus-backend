@@ -23,6 +23,12 @@ export class CreateOrderUsecase {
     private readonly auditLogRepository: AuditLogRepository,
   ) {}
 
+  // Observação do item (ex: "com gelo e limão"): texto livre, até 120 caracteres
+  private static cleanNotes(notes?: string | null): string | null {
+    const text = String(notes ?? '').replace(/\s+/g, ' ').trim().slice(0, 120);
+    return text || null;
+  }
+
   async execute(input: CreateOrderInput, actor: string): Promise<{ id: string; total: number }> {
     // 1. Mesa precisa estar aberta
     const table = await this.tableRepository.findById(input.tableId);
@@ -74,7 +80,7 @@ export class CreateOrderUsecase {
         quantity: Math.round(Number(item.quantity)),
         unitPrice: product.getUnitPrice(),
         weighed: product.getIsMeat(),
-        notes: item.notes ?? null,
+        notes: CreateOrderUsecase.cleanNotes(item.notes),
       });
     });
 
@@ -91,7 +97,8 @@ export class CreateOrderUsecase {
     const resumo = orderItems
       .map((i) => {
         const p = products.get(i.getProductId())!;
-        return p.getIsMeat() ? `${p.getName()} ${i.getQuantity()}g` : `${p.getName()} x${i.getQuantity()}`;
+        const base = p.getIsMeat() ? `${p.getName()} ${i.getQuantity()}g` : `${p.getName()} x${i.getQuantity()}`;
+        return i.getNotes() ? `${base} (${i.getNotes()})` : base;
       })
       .join(', ');
     await this.auditLogRepository.create(

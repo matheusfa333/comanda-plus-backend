@@ -9,7 +9,7 @@ export interface KitchenOrderView {
   clientName: string | null;
   status: string;
   createdAt: Date;
-  items: { productName: string; quantity: number; isMeat: boolean }[];
+  items: { productName: string; quantity: number; isMeat: boolean; notes: string | null }[];
 }
 
 @Injectable()
@@ -41,6 +41,7 @@ export class ListKitchenOrdersUsecase {
             productName: info?.name ?? 'Produto',
             quantity: it.getQuantity(),
             isMeat: info?.isMeat ?? false,
+            notes: it.getNotes(),
           };
         }),
       };

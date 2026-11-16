@@ -9,6 +9,8 @@ export interface UserListItem {
   role: string;
   needsPasswordChange: boolean;
   active: boolean;
+  deactivatedAt: Date | null;
+  deletableAt: Date | null; // a partir de quando pode ser excluído
   createdAt: Date;
 }
 
@@ -26,6 +28,8 @@ export class ListUsersUsecase {
       role: u.getRole(),
       needsPasswordChange: u.getNeedsPasswordChange(),
       active: u.getActive(),
+      deactivatedAt: u.getDeactivatedAt(),
+      deletableAt: u.getDeletableAt(),
       createdAt: u.getCreatedAt(),
     }));
   }
