@@ -50,7 +50,7 @@ export class ListClosedAccountsUsecase {
     const productById = new Map(products.map((p) => [p.getId(), p]));
     const userById = new Map(users.map((u) => [u.getId(), u]));
 
-    const views: ClosedAccountView[] = accounts.map((a) => {
+    const all: ClosedAccountView[] = accounts.map((a) => {
       const accountOrders = orders
         .filter((o) => o.getClosedAccountId() === a.getId())
         .map((o) => ({
@@ -88,6 +88,8 @@ export class ListClosedAccountsUsecase {
         orders: accountOrders,
       };
     });
+    // Mesas fechadas sem consumo (registradas antes desta regra) não aparecem
+    const views = all.filter((v) => v.orders.length > 0 || v.total > 0);
 
     return {
       accounts: views,

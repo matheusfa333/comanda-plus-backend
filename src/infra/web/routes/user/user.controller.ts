@@ -5,6 +5,7 @@ import { ListUsersUsecase } from 'src/usecases/user/list/list-users.usecase';
 import { DeleteUserUsecase } from 'src/usecases/user/delete/delete-user.usecase';
 import { ResetPasswordUsecase } from 'src/usecases/user/reset-password/reset-password.usecase';
 import { SetUserActiveUsecase } from 'src/usecases/user/set-active/set-user-active.usecase';
+import { ResetTwoFactorUserUsecase } from 'src/usecases/user/reset-two-factor/reset-two-factor-user.usecase';
 
 @Controller('users')
 @UseGuards(AuthGuard)
@@ -15,6 +16,7 @@ export class UserController {
     private readonly deleteUserUsecase: DeleteUserUsecase,
     private readonly resetPasswordUsecase: ResetPasswordUsecase,
     private readonly setUserActiveUsecase: SetUserActiveUsecase,
+    private readonly resetTwoFactorUserUsecase: ResetTwoFactorUserUsecase,
   ) {}
 
   private ensureAdmin(req: any) {
@@ -54,6 +56,14 @@ export class UserController {
   async resetPassword(@Req() req: any, @Param('id') id: string) {
     this.ensureAdmin(req);
     return this.resetPasswordUsecase.execute(id, req.username);
+  }
+
+  // Remove a verificação em 2 etapas de quem perdeu o celular
+  @Post(':id/reset-two-factor')
+  @HttpCode(HttpStatus.OK)
+  async resetTwoFactor(@Req() req: any, @Param('id') id: string) {
+    this.ensureAdmin(req);
+    return this.resetTwoFactorUserUsecase.execute(id, req.username);
   }
 
   @Patch(':id/active')

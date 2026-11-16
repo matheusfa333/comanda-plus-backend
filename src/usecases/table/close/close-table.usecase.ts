@@ -50,6 +50,16 @@ export class CloseTableUsecase {
       throw new BadRequestException('Há pedidos ainda em preparo nesta mesa. Aguarde a cozinha finalizar para fechar a conta.');
     }
 
+    // Mesa aberta e fechada sem nenhum pedido: só libera, não entra no histórico de contas
+    if (orders.length === 0) {
+      table.free();
+      await this.tableRepository.update(table);
+      await this.auditLogRepository.create(
+        AuditLog.create('CONTA_FECHADA', actor, `Mesa ${table.getIdentifier()} — liberada sem consumo`),
+      );
+      return { success: true, total: 0 };
+    }
+
     const subtotal = orders.reduce((s, o) => s + o.getTotalAmount(), 0);
     const serviceFee = Math.round(subtotal * SERVICE_FEE_RATE);
     const total = subtotal + serviceFee;

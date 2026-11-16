@@ -7,6 +7,9 @@ export const USER_ROLES: UserRole[] = ['ADMIN', 'GERENTE', 'GARCOM', 'COZINHA'];
 // Um usuário só pode ser excluído depois de ficar desativado por este período
 export const USER_DELETE_GRACE_DAYS = 30;
 
+// Perfis que são obrigados a usar a verificação em 2 etapas
+export const TWO_FACTOR_REQUIRED_ROLES: UserRole[] = ['ADMIN', 'GERENTE'];
+
 export type UserCreateDto = {
   username: string;
   name: string;
@@ -26,6 +29,9 @@ export type UserWithDto = {
   needsPasswordChange: boolean;
   active: boolean;
   deactivatedAt?: Date | null;
+  twoFactorEnabled?: boolean;
+  twoFactorSecret?: string | null;
+  twoFactorRecoveryCodes?: string[];
   createdAt: Date;
   updatedAt: Date;
 };
@@ -41,6 +47,9 @@ export class User {
     private needsPasswordChange: boolean,
     private active: boolean,
     private deactivatedAt: Date | null,
+    private twoFactorEnabled: boolean,
+    private twoFactorSecret: string | null, // criptografado
+    private twoFactorRecoveryCodes: string[], // hashes
     private readonly createdAt: Date,
     private updatedAt: Date,
   ) {}
@@ -56,6 +65,9 @@ export class User {
       needsPasswordChange ?? true,
       true,
       null,
+      false,
+      null,
+      [],
       new Date(),
       new Date(),
     );
@@ -72,6 +84,9 @@ export class User {
       dto.needsPasswordChange,
       dto.active,
       dto.deactivatedAt ?? null,
+      dto.twoFactorEnabled ?? false,
+      dto.twoFactorSecret ?? null,
+      dto.twoFactorRecoveryCodes ?? [],
       dto.createdAt,
       dto.updatedAt,
     );
@@ -93,6 +108,14 @@ export class User {
     // Usuários desativados antes desta regra não têm a data: usa a última alteração
     const since = this.deactivatedAt ?? this.updatedAt;
     return new Date(since.getTime() + USER_DELETE_GRACE_DAYS * 24 * 60 * 60 * 1000);
+  }
+  getTwoFactorEnabled(): boolean { return this.twoFactorEnabled; }
+  getTwoFactorSecret(): string | null { return this.twoFactorSecret; }
+  getTwoFactorRecoveryCodes(): string[] { return [...this.twoFactorRecoveryCodes]; }
+
+  // Admin e Gerente não podem ficar sem a verificação em 2 etapas
+  isTwoFactorRequired(): boolean {
+    return TWO_FACTOR_REQUIRED_ROLES.includes(this.role);
   }
   getCreatedAt(): Date { return this.createdAt; }
   getUpdatedAt(): Date { return this.updatedAt; }
@@ -116,6 +139,36 @@ export class User {
   updateRole(role: UserRole): void {
     this.role = role;
     this.updatedAt = new Date();
+  }
+
+  // Guarda o segredo novo (ainda não vale até ser confirmado com um código)
+  startTwoFactorSetup(encryptedSecret: string): void {
+    if (this.twoFactorEnabled) throw new Error('A verificação em 2 etapas já está ativa');
+    this.twoFactorSecret = encryptedSecret;
+    this.updatedAt = new Date();
+  }
+
+  enableTwoFactor(recoveryCodeHashes: string[]): void {
+    if (!this.twoFactorSecret) throw new Error('Configuração da verificação em 2 etapas não iniciada');
+    this.twoFactorEnabled = true;
+    this.twoFactorRecoveryCodes = [...recoveryCodeHashes];
+    this.updatedAt = new Date();
+  }
+
+  disableTwoFactor(): void {
+    this.twoFactorEnabled = false;
+    this.twoFactorSecret = null;
+    this.twoFactorRecoveryCodes = [];
+    this.updatedAt = new Date();
+  }
+
+  // Cada código de recuperação vale uma vez só
+  consumeRecoveryCode(hash: string): boolean {
+    const index = this.twoFactorRecoveryCodes.indexOf(hash);
+    if (index === -1) return false;
+    this.twoFactorRecoveryCodes.splice(index, 1);
+    this.updatedAt = new Date();
+    return true;
   }
 
   setActive(active: boolean): void {

@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 
 @Injectable()
@@ -20,6 +20,25 @@ export class JwtService {
     } catch (error) {
       throw new Error('Token inválido');
     }
+  }
+
+  // Token provisório do login em 2 etapas: não dá acesso ao sistema, só à tela do código
+  signChallenge(payload: { userId: string; step: 'verify' | 'setup' }, expiresIn: string = '10m'): string {
+    return jwt.sign({ ...payload, purpose: '2fa' }, this.challengeSecret(), { expiresIn } as any);
+  }
+
+  verifyChallenge(token: string): { userId: string; step: 'verify' | 'setup' } {
+    try {
+      const payload: any = jwt.verify(token, this.challengeSecret());
+      if (payload?.purpose !== '2fa' || !payload.userId) throw new Error();
+      return { userId: payload.userId, step: payload.step };
+    } catch (error) {
+      throw new Error('Token de verificação inválido');
+    }
+  }
+
+  private challengeSecret(): string {
+    return `${process.env.JWT_SECRET || 'secret'}:2fa-challenge`;
   }
 
   verifyRefresh(token: string): any {

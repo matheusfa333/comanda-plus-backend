@@ -2,6 +2,14 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserRepository } from 'src/domain/repositories/user.repository.interface';
 import { HashingService } from 'src/infra/services/hashing/hashing.service';
 import { JwtService } from 'src/infra/services/jwt/jwt.service';
+import { AuthSession, AuthSessionService } from 'src/infra/services/auth-session/auth-session.service';
+
+export type LoginResult =
+  | AuthSession
+  // Senha certa, falta o código do app autenticador
+  | { status: 'TWO_FACTOR_REQUIRED'; challengeToken: string }
+  // Admin/Gerente sem 2 etapas configurada: precisa configurar antes de entrar
+  | { status: 'TWO_FACTOR_SETUP_REQUIRED'; challengeToken: string };
 
 @Injectable()
 export class LoginUsecase {
@@ -9,12 +17,10 @@ export class LoginUsecase {
     private readonly userRepository: UserRepository,
     private readonly hashingService: HashingService,
     private readonly jwtService: JwtService,
+    private readonly authSessionService: AuthSessionService,
   ) {}
 
-  async execute(
-    username: string,
-    password: string,
-  ): Promise<{ accessToken: string; refreshToken: string; user: any }> {
+  async execute(username: string, password: string): Promise<LoginResult> {
     // 1. Buscar user pelo username
     const user = await this.userRepository.findByUsername((username || '').trim().toLowerCase());
     if (!user) {
@@ -22,7 +28,7 @@ export class LoginUsecase {
     }
 
     // 2. Validar password
-    const isValid = await this.hashingService.compare(password, user.getPassword());
+    const isValid = await this.hashingService.compare(password || '', user.getPassword());
     if (!isValid) {
       throw new UnauthorizedException('Usuário ou senha incorretos');
     }
@@ -32,25 +38,15 @@ export class LoginUsecase {
       throw new UnauthorizedException('Usuário desativado. Procure o administrador.');
     }
 
-    // 4. Gerar tokens (8h cobre um turno de trabalho sem deslogar)
-    const accessToken = this.jwtService.sign(
-      { userId: user.getId(), username: user.getUsername(), name: user.getName(), role: user.getRole() },
-      '8h',
-    );
-    const refreshToken = this.jwtService.signRefresh({ userId: user.getId() }, '7d');
+    // 4. Verificação em 2 etapas: a sessão só é liberada depois do código
+    if (user.getTwoFactorEnabled()) {
+      return { status: 'TWO_FACTOR_REQUIRED', challengeToken: this.jwtService.signChallenge({ userId: user.getId(), step: 'verify' }) };
+    }
+    if (user.isTwoFactorRequired()) {
+      return { status: 'TWO_FACTOR_SETUP_REQUIRED', challengeToken: this.jwtService.signChallenge({ userId: user.getId(), step: 'setup' }) };
+    }
 
-    // 5. Retornar (sem expor password)
-    return {
-      accessToken,
-      refreshToken,
-      user: {
-        id: user.getId(),
-        username: user.getUsername(),
-        name: user.getName(),
-        email: user.getEmail(),
-        role: user.getRole(),
-        needsPasswordChange: user.getNeedsPasswordChange(),
-      },
-    };
+    // 5. Sem 2 etapas: gera os tokens direto (sem expor password)
+    return this.authSessionService.issue(user);
   }
 }

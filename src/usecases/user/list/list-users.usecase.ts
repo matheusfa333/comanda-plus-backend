@@ -11,6 +11,8 @@ export interface UserListItem {
   active: boolean;
   deactivatedAt: Date | null;
   deletableAt: Date | null; // a partir de quando pode ser excluído
+  twoFactorEnabled: boolean;
+  twoFactorRequired: boolean;
   createdAt: Date;
 }
 
@@ -30,6 +32,8 @@ export class ListUsersUsecase {
       active: u.getActive(),
       deactivatedAt: u.getDeactivatedAt(),
       deletableAt: u.getDeletableAt(),
+      twoFactorEnabled: u.getTwoFactorEnabled(),
+      twoFactorRequired: u.isTwoFactorRequired(),
       createdAt: u.getCreatedAt(),
     }));
   }
